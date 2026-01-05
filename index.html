@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>WhatsApp QR Code</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        #qrcode {
+            width: 300px;
+            height: 300px;
+            margin: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Scan QR Code to Authenticate WhatsApp</h2>
+    <canvas id="qrcode"></canvas>
+    <p id="status">Loading QR...</p>
+
+    <script>
+        async function updateQR() {
+            try {
+                const res = await fetch('/qr');
+                const qrData = await res.text();
+
+                const qrCanvas = document.getElementById('qrcode');
+                const statusEl = document.getElementById('status');
+
+                if (qrData.trim()) {
+                    statusEl.textContent = 'Scan this QR with WhatsApp';
+                    // Pastikan ukuran canvas sesuai
+                    qrCanvas.width = 300;
+                    qrCanvas.height = 300;
+                    QRCode.toCanvas(qrCanvas, qrData, { width: 300, margin: 2 });
+                } else {
+                    statusEl.textContent = '✅ Authenticated! Ready to send messages.';
+                    qrCanvas.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Failed to update QR:', err);
+                document.getElementById('status').textContent = 'Error loading QR';
+            }
+        }
+
+        // Update QR setiap 2 detik
+        setInterval(updateQR, 2000);
+        updateQR();
+    </script>
+</body>
+
+</html>
