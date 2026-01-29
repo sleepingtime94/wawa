@@ -10,7 +10,7 @@ const qrcode = require("qrcode-terminal");
 const app = express();
 const PORT = process.env.PORT || 9000;
 
-// Konfigurasi autentikasi (ganti dengan key rahasia Anda)
+// Konfigurasi autentikasi
 const AUTH_KEY = process.env.AUTH_KEY;
 
 // Konfigurasi MySQL
@@ -21,7 +21,7 @@ const DB_CONFIG = {
   database: process.env.DB_NAME,
 };
 
-// Buat koneksi pool (opsional, bisa disesuaikan)
+// Buat koneksi pool
 let dbPool;
 
 // Inisialisasi WhatsApp Client
@@ -96,7 +96,6 @@ app.post("/send-message", async (req, res) => {
   }
 
   const to = `${normalizedPhone}@c.us`;
-
   const from = client.info.wid._serialized;
   const created = new Date();
 
