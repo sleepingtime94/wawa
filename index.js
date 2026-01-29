@@ -7,7 +7,7 @@ const path = require("path");
 const fs = require("fs");
 
 const app = express();
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT || 9000;
 
 // Konfigurasi autentikasi (ganti dengan key rahasia Anda)
 const AUTH_KEY = process.env.AUTH_KEY;
@@ -27,23 +27,40 @@ let dbPool;
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: { headless: true },
+  webVersionCache: {
+    type: "remote",
+    remotePath: `https://raw.githubusercontent.com/wppconnect-team/wa-version/refs/heads/main/html/2.3000.1031490220-alpha.html`,
+  },
 });
 
 // Menyimpan QR terakhir untuk ditampilkan di halaman web
 let currentQR = "";
+let isReady = false;
 
 client.on("qr", (qr) => {
   currentQR = qr;
+  isReady = false;
   console.log("QR Code received, update index.html");
 });
 
 client.on("ready", () => {
   currentQR = "";
+  isReady = true;
   console.log("Client is ready!");
 });
 
 client.on("authenticated", () => {
   console.log("Authenticated");
+});
+
+client.on("auth_failure", (msg) => {
+  isReady = false;
+  console.error("Authentication failure:", msg);
+});
+
+client.on("disconnected", (reason) => {
+  isReady = false;
+  console.log("Client disconnected:", reason);
 });
 
 client.initialize();
@@ -93,7 +110,7 @@ app.post("/send-message", async (req, res) => {
   const created = new Date();
 
   try {
-    if (!client.info) {
+    if (!isReady || !client.info) {
       throw new Error("Client not ready");
     }
 
@@ -131,7 +148,7 @@ async function logMessageToDB(from, to, message, status, created) {
 async function initDB() {
   const connection = await mysql.createConnection(DB_CONFIG);
   await connection.execute(`
-    CREATE DATABASE IF NOT EXISTS whatsapp_gateway;
+    CREATE DATABASE IF NOT EXISTS whatsapp;
   `);
   await connection.end();
 
