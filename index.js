@@ -5,6 +5,7 @@ const { Client, LocalAuth } = require("whatsapp-web.js");
 const mysql = require("mysql2/promise");
 const path = require("path");
 const fs = require("fs");
+const qrcode = require("qrcode-terminal");
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -40,7 +41,8 @@ let isReady = false;
 client.on("qr", (qr) => {
   currentQR = qr;
   isReady = false;
-  console.log("QR Code received, update index.html");
+  console.log("QR Code received!");
+  qrcode.generate(qr, { small: true });
 });
 
 client.on("ready", () => {
@@ -69,17 +71,6 @@ client.initialize();
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// Route untuk menampilkan QR code
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-// Endpoint untuk mengambil QR code terbaru
-app.get("/qr", (req, res) => {
-  res.type("text/plain");
-  res.send(currentQR || "");
-});
-
 // Route untuk mengirim pesan
 app.post("/send-message", async (req, res) => {
   const { key, phone, message } = req.body;
@@ -106,7 +97,7 @@ app.post("/send-message", async (req, res) => {
 
   const to = `${normalizedPhone}@c.us`;
 
-  const from = process.env.SENDER_CLIENT_ID;
+  const from = client.info.wid._serialized;
   const created = new Date();
 
   try {
